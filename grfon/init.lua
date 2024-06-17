@@ -10,7 +10,7 @@ grfon.serializer = require"grfon.serializer"
 
 function grfon.parse(source,dialect)
     local parser = grfon.parser.Parser:new(source,dialect)
-    return parser:parse_collection()
+    return parser:parse_element()
 end
 
 function grfon.dump(tbl,dialect)

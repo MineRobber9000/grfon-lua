@@ -106,9 +106,9 @@ local string_delimiters = {
     ["\n"] = true
 }
 
---- Parses a GRFON collection.
+--- Parses a GRFON collection or value.
 -- @return The collection, or, if the source is a lone string, the string.
-function Parser:parse_collection()
+function Parser:parse_element(asvalue)
     local result = nil
     while true do
         self:skip_whitespace()
@@ -120,10 +120,11 @@ function Parser:parse_collection()
         local token
         if self:char()=="{" then
             self:advance_char()
-            token = self:parse_collection()
+            token = self:parse_element()
         else
             token = self.dialect:unserialize(self:parse_string())
         end
+        if asvalue then return token end
         self:skip_whitespace()
         local next = self:char()
         if next==":" then -- key/value pair
@@ -131,8 +132,9 @@ function Parser:parse_collection()
                 (not self.keys_must_be_string) or type(token)=="string",
                 "Invalid GRFON (keys must be string!)")
             self:advance_char()
-            token2 = self.dialect:unserialize(self:parse_string())
+            token2 = self:parse_element(true)
             if result==nil then result={} end
+            if type(result)~="table" then result={result} end
             result[token] = token2
         elseif next==";" then
             if result==nil then
