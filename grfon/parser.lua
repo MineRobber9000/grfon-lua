@@ -116,6 +116,7 @@ function Parser:parse_element(asvalue)
         self:skip_whitespace()
         if self.c>self.source_len then return result end
         if self:char()=="}" then
+            if asvalue then return result end
             self:advance_char()
             return result
         end
