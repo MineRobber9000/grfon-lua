@@ -81,6 +81,7 @@ function Parser:skip_whitespace()
             self:advance_char()
             self:advance_char()
             self:skip_to_eol()
+            c = self:char()
         end
         if not whitespace[c] then return end
         self:advance_char()
@@ -158,6 +159,7 @@ end
 
 function Parser:parse_string()
     self:skip_whitespace()
+    if whitespace[self:char()] then error("skipped whitespace and still have whitespace *somehow*") end
     local s = ""
     while self.c<=self.source_len do
         local c = self:char()
