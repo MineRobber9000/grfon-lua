@@ -108,7 +108,8 @@ local string_delimiters = {
 }
 
 --- Parses a GRFON collection or value.
--- @return The collection, or, if the source is a lone string, the string.
+-- @param asvalue Whether to skip collection parsing and just return a value
+-- @return The value parsed.
 function Parser:parse_element(asvalue)
     local result = nil
     while true do
