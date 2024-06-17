@@ -77,12 +77,13 @@ local whitespace = {
 function Parser:skip_whitespace()
     while self.c<=self.source_len do
         local c = self:char()
-        if not whitespace[c] then break end
-        self:advance_char()
-        if c=="/" and self:char()=="/" then
+        if c=="/" and self:peek_char()=="/" then
+            self:advance_char()
             self:advance_char()
             self:skip_to_eol()
         end
+        if not whitespace[c] then return end
+        self:advance_char()
     end
 end
 
