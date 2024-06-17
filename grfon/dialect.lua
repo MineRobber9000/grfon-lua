@@ -61,12 +61,77 @@ InterpretDialect.null_as_nil = false
 -- useful in Lua. But if you want them to be interpreted here, you can set them
 -- in your own dialect (subclassed from InterpretDialect).
 
+--- Interpret "\ddd" escapes.
+InterpretDialect.interpret_decimal_escapes = false
+
+function InterpretDialect:unescape(str)
+    return (str:gsub(
+        [[\a]], "\a"
+    ):gsub(
+        [[\b]], "\b"
+    ):gsub(
+        [[\f]], "\f"
+    ):gsub(
+        [[\t]], "\t"
+    ):gsub(
+        [[\n]], "\n"
+    ):gsub(
+        [[\r]], "\r"
+    ):gsub(
+        [[\v]], "\v"
+    ):gsub(
+        [[\(%d%d?%d?)]], function(n)
+            if self.interpret_decimal_escapes then
+                return string.char(tonumber(n))
+            else
+                return n
+            end
+        end
+    ):gsub(
+        [[\(.)]], function(c) return c end
+    ))
+end
+
+function InterpretDialect:escape(str)
+    if type(str)~="string" then return str end
+    str = str:gsub("\\",[[\\]])
+    if not utf8.len(str) then
+        if not self.interpret_decimal_escapes then
+            error(("Invalid UTF-8 string %q!"):format(str:gsub([[\\]],"\\")),2)
+        end
+        local len, errpos = utf8.len(str)
+        while not len do
+            str = str:sub(1,errpos-1)
+                ..("\\%03d"):format(str:byte(errpos))
+                ..str:sub(errpos+1)
+            len, errpos = utf8.len(str)
+        end
+    end
+    return (str:gsub(
+        "\a", [[\a]]
+    ):gsub(
+        "\b", [[\b]]
+    ):gsub(
+        "\f", [[\f]]
+    ):gsub(
+        "\t", [[\t]]
+    ):gsub(
+        "\n", [[\n]]
+    ):gsub(
+        "\r", [[\r]]
+    ):gsub(
+        "\v", [[\v]]
+    ):gsub(
+        [[([:;}])]], function(c) return "\\"..c end
+    ))
+end
+
 function InterpretDialect:unserialize(value)
     if value=="true" then return true end
     if value=="false" then return false end
     if self.nil_as_nil and value=="nil" then return nil end
     if self.null_as_nil and value=="null" then return nil end
-    return tonumber(value) or value
+    return tonumber(value) or self:unescape(value)
 end
 
 function InterpretDialect:serialize(value)
@@ -80,7 +145,7 @@ function InterpretDialect:serialize(value)
         return nil -- otherwise unsupported
     end
     if type(value)=="number" then value=tostring(value) end
-    return Dialect.serialize(self,value)
+    return Dialect.serialize(self,self:escape(value))
 end
 
 return dialect
