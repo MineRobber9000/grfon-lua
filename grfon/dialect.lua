@@ -44,7 +44,7 @@ end
 function Dialect:serialize(value)
     if type(value)=="string" then
         return (value:gsub(
-            [[([:;}/])]], function(c) return "\\"..c end
+            [[([:;}/\])]], function(c) return "\\"..c end
         ):gsub(
             [[\:\/\/]], "://"
         ))
@@ -128,7 +128,7 @@ function InterpretDialect:escape(str)
     ):gsub(
         "\v", [[\v]]
     ):gsub(
-        [[([:;}/])]], function(c) return "\\"..c end
+        [[([:;}/\])]], function(c) return "\\"..c end
     ):gsub(
         [[\:\/\/]], "://"
     ))
