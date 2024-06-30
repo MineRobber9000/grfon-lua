@@ -42,7 +42,13 @@ end
 -- @param value Any Lua value (except table)
 -- @return The value in a GRFON string representation (or nil if unsupported)
 function Dialect:serialize(value)
-    if type(value)=="string" then return value end
+    if type(value)=="string" then
+        return (value:gsub(
+            [[([:;}/])]], function(c) return "\\"..c end
+        ):gsub(
+            [[\:\/\/]], "://"
+        ))
+    end
     return nil
 end
 
@@ -122,7 +128,9 @@ function InterpretDialect:escape(str)
     ):gsub(
         "\v", [[\v]]
     ):gsub(
-        [[([:;}])]], function(c) return "\\"..c end
+        [[([:;}/])]], function(c) return "\\"..c end
+    ):gsub(
+        [[\:\/\/]], "://"
     ))
 end
 
