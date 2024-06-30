@@ -62,6 +62,15 @@ function Parser:advance_char()
     self.i=utf8.offset(self.source,self.c)
 end
 
+--- Un-advances the parser to the previous character.
+-- Can't unadvance past the first character, and doesn't have any effect when
+-- we're already at character 1.
+function Parser:unadvance_char()
+    if self.c<2 then return end
+    self.c=self.c-1
+    self.i=utf8.offset(self.source,self.c)
+end
+
 --- A list of characters considered "whitespace".
 local whitespace = {
     [" "] = true,
@@ -165,7 +174,19 @@ function Parser:parse_string()
     local s = ""
     while self.c<=self.source_len do
         local c = self:char()
-        if string_delimiters[c] then break end
+        if string_delimiters[c] then
+            if c==":" then -- SPECIAL CASE: URLs (specifically `://`)
+                self:advance_char()
+                if self:char()=="/" and self:peek_char()=="/" then
+                    self:advance_char()
+                    self:advance_char()
+                    s = s .. "://"
+                    goto continue
+                end
+                self:unadvance_char()
+            end
+            break
+        end
         if c=="/" and self:peek_char()=="/" then break end
         s = s .. c
         self:advance_char()
@@ -173,6 +194,7 @@ function Parser:parse_string()
             s = s .. self:char()
             self:advance_char()
         end
+        ::continue::
     end
     return s
 end
